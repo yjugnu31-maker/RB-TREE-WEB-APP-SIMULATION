@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Red-Black Tree Visualizer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #080b18;
+            --panel: #11162a;
+            --panel-light: #171e36;
+            --border: #283252;
+
+            --primary: #8b5cf6;
+            --primary-light: #a78bfa;
+
+            --blue: #38bdf8;
+            --green: #22c55e;
+            --red: #ff4d6d;
+
+            --text: #f8fafc;
+            --muted: #94a3b8;
+        }
+
+        body {
+            font-family: Inter, Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, #1d1740 0, transparent 35%),
+                radial-gradient(circle at top right, #082f49 0, transparent 30%),
+                var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 32px 20px 25px;
+        }
+
+        header h1 {
+            font-size: 34px;
+            font-weight: 800;
+            background: linear-gradient(
+                90deg,
+                #a78bfa,
+                #38bdf8
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--muted);
+            margin-top: 8px;
+        }
+
+        .container {
+            width: 94%;
+            max-width: 1250px;
+            margin: auto;
+            padding-bottom: 40px;
+        }
+
+        /* CONTROL PANEL */
+
+        .control-panel {
+            background: rgba(17, 22, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+        }
+
+        .input-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .input-box label {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            margin-bottom: 7px;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 15px;
+            background: #080d1e;
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 10px;
+            outline: none;
+            font-size: 16px;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 13px 18px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .insert-btn {
+            background: linear-gradient(
+                135deg,
+                #7c3aed,
+                #2563eb
+            );
+        }
+
+        .reset-btn {
+            background: #252d45;
+            border: 1px solid #3a4565;
+        }
+
+        .sample-btn {
+            background: #123047;
+            color: #7dd3fc;
+            border: 1px solid #164e63;
+        }
+
+        /* STATUS */
+
+        .status {
+            margin-top: 15px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            color: #dbeafe;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--green);
+        }
+
+        /* STATS */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .stat {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+
+        .stat span {
+            display: block;
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .stat strong {
+            font-size: 23px;
+        }
+
+        /* MAIN GRID */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        /* TREE */
+
+        .tree-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+        }
+
+        .tree-header {
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tree-header h2 {
+            font-size: 17px;
+        }
+
+        .tree-header span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .tree-container {
+            overflow-x: auto;
+            min-height: 510px;
+            background:
+                linear-gradient(
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(255,255,255,0.025) 1px,
+                    transparent 1px
+                );
+            background-size: 35px 35px;
+        }
+
+        svg {
+            display: block;
+            min-width: 850px;
+            width: 100%;
+            height: 510px;
+        }
+
+        .edge {
+            stroke: #526080;
+            stroke-width: 2;
+        }
+
+        .node {
+            stroke: #ffffff;
+            stroke-width: 3;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .node:hover {
+            stroke: var(--blue);
+            stroke-width: 5;
+            filter: drop-shadow(
+                0 0 10px rgba(56, 189, 248, 0.7)
+            );
+        }
+
+        .red-node {
+            fill: var(--red);
+        }
+
+        .black-node {
+            fill: #101827;
+        }
+
+        .node-text {
+            fill: white;
+            font-size: 15px;
+            font-weight: bold;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+
+        .selected {
+            stroke: #facc15 !important;
+            stroke-width: 6 !important;
+            filter: drop-shadow(
+                0 0 12px rgba(250, 204, 21, 0.7)
+            );
+        }
+
+        /* SIDE PANEL */
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+        }
+
+        .card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .case {
+            padding: 10px;
+            border-radius: 9px;
+            background: #0b1022;
+            border: 1px solid #26304d;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .case strong {
+            color: var(--primary-light);
+        }
+
+        .history {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            font-size: 12px;
+            color: #cbd5e1;
+            padding: 8px 0;
+            border-bottom: 1px solid #202943;
+        }
+
+        /* LEGEND */
+
+        .legend {
+            display: flex;
+            gap: 18px;
+            padding: 14px 18px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            color: var(--muted);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .legend-circle {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 1px solid white;
+        }
+
+        .legend-red {
+            background: var(--red);
+        }
+
+        .legend-black {
+            background: #101827;
+        }
+
+        .legend-selected {
+            background: #facc15;
+        }
+
+        /* ANIMATION */
+
+        @keyframes appear {
+            from {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .new-node-animation {
+            animation: appear 0.5s ease-out;
+        }
+
+        /* RESPONSIVE */
+
+        @media(max-width: 850px) {
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            header h1 {
+                font-size: 27px;
+            }
+        }
+
+        @media(max-width: 500px) {
+
+            .container {
+                width: 96%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            button {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <h1>🔴⚫ Red-Black Tree Visualizer</h1>
+
+    <p>
+        Interactive simulation of Red-Black Tree insertion,
+        rotations and recoloring
+    </p>
+
+</header>
+
+
+<div class="container">
+
+
+    <!-- CONTROL PANEL -->
+
+    <div class="control-panel">
+
+        <div class="input-box">
+
+            <label>Enter Node Value</label>
+
+            <input
+                type="number"
+                id="valueInput"
+                placeholder="Example: 25"
+            >
+
+        </div>
+
+        <button
+            class="insert-btn"
+            id="insertBtn"
+        >
+            + Insert Node
+        </button>
+
+        <button
+            class="sample-btn"
+            id="sampleBtn"
+        >
+            ▶ Load Example
+        </button>
+
+        <button
+            class="reset-btn"
+            id="resetBtn"
+        >
+            ↻ Reset
+        </button>
+
+    </div>
+
+
+    <!-- STATUS -->
+
+    <div class="status">
+
+        <div class="status-dot"></div>
+
+        <span id="status">
+            Tree is empty. Insert a value to start.
+        </span>
+
+    </div>
+
+
+    <!-- STATISTICS -->
+
+    <div class="stats">
+
+        <div class="stat">
+            <span>Total Nodes</span>
+            <strong id="nodeCount">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>Tree Height</span>
+            <strong id="treeHeight">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>Red Nodes</span>
+            <strong id="redCount">0</strong>
+        </div>
+
+        <div class="stat">
+            <span>Black Nodes</span>
+            <strong id="blackCount">0</strong>
+        </div>
+
+    </div>
+
+
+    <!-- MAIN -->
+
+    <div class="main-grid">
+
+
+        <!-- TREE -->
+
+        <div class="tree-panel">
+
+            <div class="tree-header">
+
+                <h2>Tree Visualization</h2>
+
+                <span>
+                    Click any node to inspect it
+                </span>
+
+            </div>
+
+            <div class="tree-container">
+
+                <svg
+                    id="treeSvg"
+                    viewBox="0 0 1000 510"
+                ></svg>
+
+            </div>
+
+
+            <div class="legend">
+
+                <div class="legend-item">
+                    <span class="legend-circle legend-red"></span>
+                    Red
+                </div>
+
+                <div class="legend-item">
+                    <span class="legend-circle legend-black"></span>
+                    Black
+                </div>
+
+                <div class="legend-item">
+                    <span class="legend-circle legend-selected"></span>
+                    Selected
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- SIDE PANEL -->
+
+        <div class="side-panel">
+
+
+            <!-- CURRENT CASE -->
+
+            <div class="card">
+
+                <h3>⚙ Current Operation</h3>
+
+                <div
+                    class="case"
+                    id="caseInfo"
+                >
+                    No operation yet.
+                </div>
+
+            </div>
+
+
+            <!-- NODE INFO -->
+
+            <div class="card">
+
+                <h3>🔎 Selected Node</h3>
+
+                <div
+                    class="case"
+                    id="nodeInfo"
+                >
+                    Click a node in the tree.
+                </div>
+
+            </div>
+
+
+            <!-- HISTORY -->
+
+            <div class="card">
+
+                <h3>📋 Operation History</h3>
+
+                <div
+                    class="history"
+                    id="history"
+                >
+                    No operations yet.
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // =========================================
+    // RED BLACK TREE
+    // =========================================
+
+    const RED = "RED";
+    const BLACK = "BLACK";
+
+
+    const NIL = {
+        color: BLACK,
+        left: null,
+        right: null,
+        parent: null,
+        value: null
+    };
+
+    NIL.left = NIL;
+    NIL.right = NIL;
+    NIL.parent = NIL;
+
+
+    let root = NIL;
+
+    let operations = [];
+
+    let selectedNode = null;
+
+
+    // =========================================
+    // CREATE NODE
+    // =========================================
+
+    function createNode(value) {
+
+        return {
+
+            value: value,
+
+            color: RED,
+
+            left: NIL,
+
+            right: NIL,
+
+            parent: NIL
+
+        };
+
+    }
+
+
+    // =========================================
+    // LEFT ROTATION
+    // =========================================
+
+    function leftRotate(x) {
+
+        const y = x.right;
+
+        x.right = y.left;
+
+
+        if (y.left !== NIL) {
+
+            y.left.parent = x;
+
+        }
+
+
+        y.parent = x.parent;
+
+
+        if (x.parent === NIL) {
+
+            root = y;
+
+        }
+
+        else if (x === x.parent.left) {
+
+            x.parent.left = y;
+
+        }
+
+        else {
+
+            x.parent.right = y;
+
+        }
+
+
+        y.left = x;
+
+        x.parent = y;
+
+    }
+
+
+    // =========================================
+    // RIGHT ROTATION
+    // =========================================
+
+    function rightRotate(x) {
+
+        const y = x.left;
+
+        x.left = y.right;
+
+
+        if (y.right !== NIL) {
+
+            y.right.parent = x;
+
+        }
+
+
+        y.parent = x.parent;
+
+
+        if (x.parent === NIL) {
+
+            root = y;
+
+        }
+
+        else if (x === x.parent.right) {
+
+            x.parent.right = y;
+
+        }
+
+        else {
+
+            x.parent.left = y;
+
+        }
+
+
+        y.right = x;
+
+        x.parent = y;
+
+    }
+
+
+    // =========================================
+    // INSERT
+    // =========================================
+
+    function insert(value) {
+
+        let z = createNode(value);
+
+        let y = NIL;
+
+        let x = root;
+
+
+        // Find position
+
+        while (x !== NIL) {
+
+            y = x;
+
+
+            if (value === x.value) {
+
+                return {
+                    success: false,
+                    message: "Duplicate value ignored."
+                };
+
+            }
+
+
+            if (value < x.value) {
+
+                x = x.left;
+
+            }
+
+            else {
+
+                x = x.right;
+
+            }
+
+        }
+
+
+        z.parent = y;
+
+
+        if (y === NIL) {
+
+            root = z;
+
+        }
+
+        else if (value < y.value) {
+
+            y.left = z;
+
+        }
+
+        else {
+
+            y.right = z;
+
+        }
+
+
+        let actions = [];
+
+        actions.push(
+            `Inserted ${value} as RED`
+        );
+
+
+        fixInsertion(z, actions);
+
+
+        return {
+
+            success: true,
+
+            message: actions.join(" → ")
+
+        };
+
+    }
+
+
+    // =========================================
+    // INSERTION FIX
+    // =========================================
+
+    function fixInsertion(z, actions) {
+
+        while (z.parent.color === RED) {
+
+
+            // Parent is LEFT child
+
+            if (
+                z.parent ===
+                z.parent.parent.left
+            ) {
+
+                const uncle =
+                    z.parent.parent.right;
+
+
+                // CASE 1
+
+                if (uncle.color === RED) {
+
+                    z.parent.color = BLACK;
+
+                    uncle.color = BLACK;
+
+                    z.parent.parent.color = RED;
+
+
+                    actions.push(
+                        "Case 1: Recoloring"
+                    );
+
+
+                    z =
+                        z.parent.parent;
+
+                }
+
+
+                else {
+
+
+                    // CASE 2
+
+                    if (
+                        z ===
+                        z.parent.right
+                    ) {
+
+                        z = z.parent;
+
+                        leftRotate(z);
+
+
+                        actions.push(
+                            "Case 2: Left Rotation"
+                        );
+
+                    }
+
+
+                    // CASE 3
+
+                    z.parent.color = BLACK;
+
+                    z.parent.parent.color = RED;
+
+
+                    rightRotate(
+                        z.parent.parent
+                    );
+
+
+                    actions.push(
+                        "Case 3: Right Rotation + Recoloring"
+                    );
+
+                }
+
+            }
+
+
+            // Parent is RIGHT child
+
+            else {
+
+                const uncle =
+                    z.parent.parent.left;
+
+
+                // CASE 1
+
+                if (uncle.color === RED) {
+
+                    z.parent.color = BLACK;
+
+                    uncle.color = BLACK;
+
+                    z.parent.parent.color = RED;
+
+
+                    actions.push(
+                        "Case 1: Recoloring"
+                    );
+
+
+                    z =
+                        z.parent.parent;
+
+                }
+
+
+                else {
+
+
+                    // CASE 2
+
+                    if (
+                        z ===
+                        z.parent.left
+                    ) {
+
+                        z = z.parent;
+
+                        rightRotate(z);
+
+
+                        actions.push(
+                            "Case 2: Right Rotation"
+                        );
+
+                    }
+
+
+                    // CASE 3
+
+                    z.parent.color = BLACK;
+
+                    z.parent.parent.color = RED;
+
+
+                    leftRotate(
+                        z.parent.parent
+                    );
+
+
+                    actions.push(
+                        "Case 3: Left Rotation + Recoloring"
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        root.color = BLACK;
+
+
+        actions.push(
+            "Root fixed as BLACK"
+        );
+
+    }
+
+
+    // =========================================
+    // GET TREE INFORMATION
+    // =========================================
+
+    function getStats() {
+
+        let nodes = 0;
+
+        let reds = 0;
+
+        let blacks = 0;
+
+
+        function walk(node) {
+
+            if (node === NIL) {
+
+                return 0;
+
+            }
+
+
+            nodes++;
+
+
+            if (node.color === RED) {
+
+                reds++;
+
+            }
+
+            else {
+
+                blacks++;
+
+            }
+
+
+            const leftHeight =
+                walk(node.left);
+
+            const rightHeight =
+                walk(node.right);
+
+
+            return (
+                1 +
+                Math.max(
+                    leftHeight,
+                    rightHeight
+                )
+            );
+
+        }
+
+
+        const height = walk(root);
+
+
+        document.getElementById(
+            "nodeCount"
+        ).textContent = nodes;
+
+
+        document.getElementById(
+            "treeHeight"
+        ).textContent = height;
+
+
+        document.getElementById(
+            "redCount"
+        ).textContent = reds;
+
+
+        document.getElementById(
+            "blackCount"
+        ).textContent = blacks;
+
+    }
+
+
+    // =========================================
+    // DRAW TREE
+    // =========================================
+
+    function renderTree() {
+
+        const svg =
+            document.getElementById(
+                "treeSvg"
+            );
+
+
+        svg.innerHTML = "";
+
+
+        if (root === NIL) {
+
+            const text =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "text"
+                );
+
+
+            text.setAttribute(
+                "x",
+                "500"
+            );
+
+            text.setAttribute(
+                "y",
+                "250"
+            );
+
+            text.setAttribute(
+                "fill",
+                "#94a3b8"
+            );
+
+            text.setAttribute(
+                "text-anchor",
+                "middle"
+            );
+
+            text.setAttribute(
+                "font-size",
+                "22"
+            );
+
+
+            text.textContent =
+                "Insert a value to create the tree";
+
+
+            svg.appendChild(text);
+
+            getStats();
+
+            return;
+
+        }
+
+
+        const nodes = [];
+
+        const edges = [];
+
+
+        function calculate(
+            node,
+            depth,
+            left,
+            right
+        ) {
+
+            if (node === NIL) {
+
+                return;
+
+            }
+
+
+            const x =
+                (left + right) / 2;
+
+            const y =
+                60 + depth * 90;
+
+
+            nodes.push({
+                node,
+                x,
+                y
+            });
+
+
+            if (node.left !== NIL) {
+
+                const childX =
+                    (left + x) / 2;
+
+
+                edges.push({
+
+                    x1: x,
+
+                    y1: y,
+
+                    x2: childX,
+
+                    y2: y + 90
+
+                });
+
+
+                calculate(
+                    node.left,
+                    depth + 1,
+                    left,
+                    x
+                );
+
+            }
+
+
+            if (node.right !== NIL) {
+
+                const childX =
+                    (x + right) / 2;
+
+
+                edges.push({
+
+                    x1: x,
+
+                    y1: y,
+
+                    x2: childX,
+
+                    y2: y + 90
+
+                });
+
+
+                calculate(
+                    node.right,
+                    depth + 1,
+                    x,
+                    right
+                );
+
+            }
+
+        }
+
+
+        calculate(
+            root,
+            0,
+            30,
+            970
+        );
+
+
+        // Draw edges
+
+        edges.forEach(edge => {
+
+            const line =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "line"
+                );
+
+
+            line.setAttribute(
+                "x1",
+                edge.x1
+            );
+
+            line.setAttribute(
+                "y1",
+                edge.y1
+            );
+
+            line.setAttribute(
+                "x2",
+                edge.x2
+            );
+
+            line.setAttribute(
+                "y2",
+                edge.y2
+            );
+
+
+            line.setAttribute(
+                "class",
+                "edge"
+            );
+
+
+            svg.appendChild(line);
+
+        });
+
+
+        // Draw nodes
+
+        nodes.forEach(item => {
+
+            const group =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "g"
+                );
+
+
+            const circle =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "circle"
+                );
+
+
+            circle.setAttribute(
+                "cx",
+                item.x
+            );
+
+            circle.setAttribute(
+                "cy",
+                item.y
+            );
+
+            circle.setAttribute(
+                "r",
+                "27"
+            );
+
+
+            circle.setAttribute(
+                "class",
+                "node " +
+                (
+                    item.node.color === RED
+                        ? "red-node"
+                        : "black-node"
+                )
+            );
+
+
+            if (
+                selectedNode &&
+                selectedNode === item.node
+            ) {
+
+                circle.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            circle.addEventListener(
+                "click",
+                function () {
+
+                    selectedNode =
+                        item.node;
+
+                    showNodeInfo(
+                        item.node
+                    );
+
+                    renderTree();
+
+                }
+            );
+
+
+            const text =
+                document.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "text"
+                );
+
+
+            text.setAttribute(
+                "x",
+                item.x
+            );
+
+            text.setAttribute(
+                "y",
+                item.y
+            );
+
+
+            text.setAttribute(
+                "class",
+                "node-text"
+            );
+
+
+            text.textContent =
+                item.node.value;
+
+
+            group.appendChild(circle);
+
+            group.appendChild(text);
+
+            svg.appendChild(group);
+
+        });
+
+
+        getStats();
+
+    }
+
+
+    // =========================================
+    // NODE INFORMATION
+    // =========================================
+
+    function showNodeInfo(node) {
+
+        const info =
+            document.getElementById(
+                "nodeInfo"
+            );
+
+
+        let parent =
+            node.parent === NIL
+                ? "None — Root"
+                : node.parent.value;
+
+
+        let left =
+            node.left === NIL
+                ? "NIL"
+                : node.left.value;
+
+
+        let right =
+            node.right === NIL
+                ? "NIL"
+                : node.right.value;
+
+
+        info.innerHTML = `
+
+            <strong>Value:</strong>
+            ${node.value}
+            <br><br>
+
+            <strong>Color:</strong>
+            ${node.color}
+            <br><br>
+
+            <strong>Parent:</strong>
+            ${parent}
+            <br><br>
+
+            <strong>Left:</strong>
+            ${left}
+            <br><br>
+
+            <strong>Right:</strong>
+            ${right}
+
+        `;
+
+    }
+
+
+    // =========================================
+    // HISTORY
+    // =========================================
+
+    function updateHistory() {
+
+        const history =
+            document.getElementById(
+                "history"
+            );
+
+
+        if (operations.length === 0) {
+
+            history.textContent =
+                "No operations yet.";
+
+            return;
+
+        }
+
+
+        history.innerHTML = "";
+
+
+        operations
+            .slice()
+            .reverse()
+            .slice(0, 8)
+            .forEach(operation => {
+
+                const div =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                div.className =
+                    "history-item";
+
+
+                div.textContent =
+                    operation;
+
+
+                history.appendChild(div);
+
+            });
+
+    }
+
+
+    // =========================================
+    // INSERT BUTTON
+    // =========================================
+
+    document
+        .getElementById("insertBtn")
+        .addEventListener(
+            "click",
+            insertValue
+        );
+
+
+    function insertValue() {
+
+        const input =
+            document.getElementById(
+                "valueInput"
+            );
+
+
+        const value =
+            Number(input.value);
+
+
+        if (!Number.isInteger(value)) {
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                "Please enter a valid integer.";
+
+            return;
+
+        }
+
+
+        const result =
+            insert(value);
+
+
+        document.getElementById(
+            "status"
+        ).textContent =
+            result.message;
+
+
+        document.getElementById(
+            "caseInfo"
+        ).textContent =
+            result.message;
+
+
+        if (result.success) {
+
+            operations.push(
+                result.message
+            );
+
+            selectedNode = null;
+
+        }
+
+
+        renderTree();
+
+        updateHistory();
+
+
+        input.value = "";
+
+        input.focus();
+
+    }
+
+
+    // =========================================
+    // ENTER KEY
+    // =========================================
+
+    document
+        .getElementById("valueInput")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    insertValue();
+
+                }
+
+            }
+        );
+
+
+    // =========================================
+    // LOAD SAMPLE
+    // =========================================
+
+    document
+        .getElementById("sampleBtn")
+        .addEventListener(
+            "click",
+            function() {
+
+                resetTree(false);
+
+
+                const values =
+                    [10, 20, 30, 15, 25, 5, 1];
+
+
+                values.forEach(
+                    value => {
+
+                        const result =
+                            insert(value);
+
+
+                        if (result.success) {
+
+                            operations.push(
+                                result.message
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                document.getElementById(
+                    "status"
+                ).textContent =
+                    "Example tree loaded: 10, 20, 30, 15, 25, 5, 1";
+
+
+                document.getElementById(
+                    "caseInfo"
+                ).textContent =
+                    "Sample insertion sequence completed with automatic rotations and recoloring.";
+
+
+                renderTree();
+
+                updateHistory();
+
+            }
+        );
+
+
+    // =========================================
+    // RESET
+    // =========================================
+
+    document
+        .getElementById("resetBtn")
+        .addEventListener(
+            "click",
+            function() {
+
+                resetTree(true);
+
+            }
+        );
+
+
+    function resetTree(showMessage) {
+
+        root = NIL;
+
+        operations = [];
+
+        selectedNode = null;
+
+
+        if (showMessage) {
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                "Tree has been reset.";
+
+            document.getElementById(
+                "caseInfo"
+            ).textContent =
+                "No operation yet.";
+
+            document.getElementById(
+                "nodeInfo"
+            ).textContent =
+                "Click a node in the tree.";
+
+        }
+
+
+        renderTree();
+
+        updateHistory();
+
+    }
+
+
+    // =========================================
+    // INITIAL RENDER
+    // =========================================
+
+    renderTree();
+
+</script>
+
+</body>
+</html>
